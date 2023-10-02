@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  laravel:
+    build:
+      context: ./docker
+      dockerfile: php/Dockerfile
+    user: 1000:1000
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      - mysql
+    networks:
+      - laravel-network
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root
+    command: mysqld --sql_mode="STRICT_ALL_TABLES,NO_ENGINE_SUBSTITUTION"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - laravel-network
+
+  nginx:
+    build:
+      context: ./docker/nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - laravel
+      - mysql
+    volumes:
+      - ./public:/var/www/html/public
+    networks:
+      - laravel-network
+
+volumes:
+  mysql_data:
+
+networks:
+  laravel-network:
+    driver: bridge
